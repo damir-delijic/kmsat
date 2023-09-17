@@ -29,7 +29,7 @@ function formulaTypeTwo(){
     if(globalFormula[0] == '!' || globalFormula[0] == 'K'){
         let operator;
         if(globalFormula[0] == 'K'){
-            if(globalFormula[1] == '1' || globalFormula[1] == '2'){
+            if(globalFormula[1] == '1' || globalFormula[1] == '2' || globalFormula[1] == '3'){
                 operator = globalFormula[0] + globalFormula[1]
                 globalFormula = globalFormula.substring(2)
             }else{
