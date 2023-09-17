@@ -40,13 +40,19 @@ function build(node){
                 let successor1 = node.createSuccessor(ncWitness[1], true)   
                 successor1.isSAT = build(successor1)
 
-                let successor2 = node.createSuccessor(ncWitness[2], true)
-                successor2.isSAT = build(successor2)
-
-                if(successor1.isSAT || successor2.isSAT){
+                if(successor1.isSAT == true){
                     node.isSAT = true
                     return true
                 }
+
+                let successor2 = node.createSuccessor(ncWitness[2], true)
+                successor2.isSAT = build(successor2)
+
+                if(successor2.isSAT == true){
+                    node.isSAT = true
+                    return true
+                }
+                
             }
 
             node.isSAT = false
@@ -62,10 +68,15 @@ function build(node){
                 let successor1 = node.createSuccessor(mfWitness[1], true)   
                 successor1.isSAT = build(successor1)
 
+                if(successor1.isSAT == true){
+                    node.isSAT = true
+                    return true
+                }
+
                 let successor2 = node.createSuccessor(mfWitness[2], true)
                 successor2.isSAT = build(successor2)
 
-                if(successor1.isSAT || successor2.isSAT){
+                if(successor2.isSAT == true){
                     node.isSAT = true
                     return true
                 }
@@ -80,7 +91,8 @@ function build(node){
         if(nKFormulas.length > 0){
             var result = true
 
-            nKFormulas.forEach(formula => {
+            for(let i = 0; i < nKFormulas.length; i++){
+                let formula = nKFormulas[i]
                 let negationF = formula
                 let modalF = negationF.formula
                 let phi = modalF.formula;
@@ -89,7 +101,11 @@ function build(node){
                 let successor = node.createISuccessor(reducedSet, formulaNegation)
                 successor.isSAT = build(successor)
                 result = result && successor.isSAT
-            });
+                if(result == false){
+                    break
+                }
+            }
+
             node.isSAT = result
             return result
         }
