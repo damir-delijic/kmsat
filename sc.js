@@ -11,7 +11,7 @@ function build(node){
         
         let dnWitness = node.findDoubleNegationWitness()
         if(dnWitness){
-            let successor = node.createSuccessor(dnWitness, false)
+            let successor = node.createSuccessor(dnWitness.formula.formula, false)
             successor.isSAT = build(successor)
             return successor.isSAT
         }
@@ -125,7 +125,7 @@ function KmSAT(formula){
 }
 
 function main(){
-    let input = '(p&!(p&q))&(K1!p&!K1K2q)'
+    let input = '((!p&r)&!(K1K2!K3!q&t)&(K1!p))&(!K1r)&q'
     let rootFormula = Parser.parse(input)
     let result = KmSAT(rootFormula)
     console.log('Zadovoljivost formule: ', result)
