@@ -5,14 +5,15 @@ function build(node){
 
     if(node.isAnObviouslyContradictorySetOfFormulas()){
         node.isClosed = true
-        return
+        node.isSAT = false
+        return false
     }else{
         
         let dnWitness = node.findDoubleNegationWitness()
         if(dnWitness){
             let successor = node.createSuccessor(dnWitness, false)
-            build(successor)
-            return
+            successor.isSAT = build(successor)
+            return successor.isSAT
         }
         
         let cWitness = node.findConjunction()
@@ -27,9 +28,9 @@ function build(node){
             }
 
             let successor = node.createSuccesorWithTwoMore(toBeAdded)
-            build(successor)
+            successor.isSAT = build(successor)
 
-            return
+            return successor.isSAT
         }
 
         let ncWitness = node.findConjunctionNegation()
@@ -37,52 +38,81 @@ function build(node){
             
             if(ncWitness[1] && ncWitness[2]){
                 let successor1 = node.createSuccessor(ncWitness[1], true)   
-                build(successor1)
+                successor1.isSAT = build(successor1)
 
                 let successor2 = node.createSuccessor(ncWitness[2], true)
-                build(successor2)
-            }else build(node)
+                successor2.isSAT = build(successor2)
 
-            return
-        }
-        node.isTablo = true
-
-        let modalFormula = node.findModalFormula()
-        modalFormula.print()
-        if(modalFormula){
-            let subFormulas = modalFormula.getSubFormulas()
-            console.log(subFormulas)
-            let [formula, formulaNegation] = node.checkForSubFormulaWitness(subFormulas)
-
-            if(formula && formulaNegation){
-                let successor1 = node.createSuccessor(formula, true)
-                build(successor1)
-                let successor2 = node.createSuccessor(formulaNegation, true)
-                build(successor2)
-                return;
+                if(successor1.isSAT || successor2.isSAT){
+                    node.isSAT = true
+                    return true
+                }
             }
 
+            node.isSAT = false
+            return false
+        }
+
+        node.isTablo = true
+
+        let mfWitness = node.findExtendedTabloWitness()
+        if(mfWitness[0]){
+    
+            if(mfWitness[1] && mfWitness[2]){
+                let successor1 = node.createSuccessor(mfWitness[1], true)   
+                successor1.isSAT = build(successor1)
+
+                let successor2 = node.createSuccessor(mfWitness[2], true)
+                successor2.isSAT = build(successor2)
+
+                if(successor1.isSAT || successor2.isSAT){
+                    node.isSAT = true
+                    return true
+                }
+            }
+            node.isSAT = false
+            return false
         }
 
         node.isExtendedTablo = true
 
+        let nKFormulas = node.findNKF()
+        if(nKFormulas.length > 0){
+            var result = true
 
+            nKFormulas.forEach(formula => {
+                let negationF = formula
+                let modalF = negationF.formula
+                let phi = modalF.formula;
+                let formulaNegation = phi.getNegation()
+                let reducedSet = node.getReducedSet(modalF.operator)
+                let successor = node.createISuccessor(reducedSet, formulaNegation)
+                successor.isSAT = build(successor)
+                result = result && successor.isSAT
+            });
+            node.isSAT = result
+            return result
+        }
+
+        
+        node.isSAT = true
+        return true
     }
+
 }
 
 function KmSAT(formula){
     let root = new Node.Node(formula.toTextual(), [formula], false)
-    build(root);
+    root.isSAT = build(root);
     root.print()
-    return false
+    return root.isSAT
 }
 
 function main(){
     let input = '(p&!(p&q))&(K1!p&!K1K2q)'
     let rootFormula = Parser.parse(input)
-    rootFormula.print()
     let result = KmSAT(rootFormula)
-    console.log('Formula je zadovoljiva: ', result)
+    console.log('Zadovoljivost formule: ', result)
 }
 
 main()

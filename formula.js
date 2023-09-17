@@ -34,6 +34,14 @@ class Formula {
         console.log(this.toTextual())
     }
 
+    getNegation(){
+        if(this.operator && this.operator == '!'){
+            return this.formula
+        }else{
+            return new UnaryOperatorFormula('!', this)
+        }
+    }
+
 }
 
 class BinaryOperatorFormula extends Formula{
@@ -57,6 +65,10 @@ class BinaryOperatorFormula extends Formula{
             }
         }
 
+        return false
+    }
+
+    isModal(){
         return false
     }
 
@@ -118,6 +130,10 @@ class Literal extends Formula{
                 return true
             }
         }
+        return false
+    }
+
+    isModal(){
         return false
     }
 

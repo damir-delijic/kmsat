@@ -14,22 +14,22 @@ class Node {
         this.isClosed = false
     }
 
-    print(){
-        console.log(this.toTextual())
+    copyArray(arr){
+        let newArr = []
+        for(let i = 0; i < arr.length; i++){
+            newArr.push(arr[i])
+        }
+        return newArr
     }
 
-    toTextual(){
-        let result = ''
-
+    print(){
+        console.log(this.label)
         for(let i = 0; i < this.successors.length; i++){
-            result = result + (i > 0 ? ' / ' : '') + this.successors[i].toTextual()
+            let succ = this.successors[i]
+            succ.print()
         }
-        if(result.length > 0){
-            result = result
-        }else{
-            result = 'None'
-        }
-        return this.label + ' -> ' + result
+
+        
     }
 
     deepCopyFormulas(){
@@ -51,7 +51,7 @@ class Node {
             newFormulas = this.formulas
         }
         newFormulas.push(formula)
-        let successor = new Node(formula.toTextual(), newFormulas, this)
+        let successor = new Node(this.label + ', ' + formula.toTextual(), newFormulas, this)
         this.successors.push(successor)
         return successor
     }
@@ -59,12 +59,18 @@ class Node {
     createSuccesorWithTwoMore(formulas){
         let newFormulas = this.formulas
         let newLabel = ''
+        let removeLastTick = false
         for(let i = 0; i < formulas.length; i++){
             newFormulas.push(formulas[i])
             newLabel = newLabel + formulas[i].toTextual() + ', '
+            removeLastTick = true
+        }
+
+        if(removeLastTick){
+            newLabel = newLabel.substring(0, newLabel.length - 2)
         }
         
-        let successor = new Node(newLabel, newFormulas, this)
+        let successor = new Node(this.label + ', ' + newLabel, newFormulas, this)
         this.successors.push(successor)
         return successor
     }
@@ -105,16 +111,10 @@ class Node {
                 if(innerFormula.type == 'Binary'){
                     let f1Negation = new Formulas.UnaryOperatorFormula('!', innerFormula.f1)
                     let f2Negation = new Formulas.UnaryOperatorFormula('!', innerFormula.f2)
-                    
-                    let result = [false, false, false]
 
                     if(!this.contains(f1Negation) && !this.contains(f2Negation)){
-                        result[0] = true
-                        result[1] = f1Negation
-                        result[2] = f2Negation
+                        return [true, f1Negation, f2Negation]
                     }
-
-                    return result
                 }
             }
         }
@@ -122,39 +122,84 @@ class Node {
         return [false, false, false]
     }
 
-    
+    findExtendedTabloWitness(){
+        let i, formula, j, sf;
+        for(i = 0 ; i < this.formulas.length; i++){
+            formula = this.formulas[i]
+            let subFormulas = formula.getSubFormulas()
+            for(j = 0; j < subFormulas.length; j++){
+                sf = subFormulas[j]
+                let nsf = sf.getNegation()
+                
+                if(!this.contains(sf) && !this.contains(nsf)){
+                    return [true, sf, nsf]
+                }
 
-    checkForSubFormulaWitness(subFormulas){
-        let i, formula;
-        for(i = 0; i < subFormulas.length; i++){
-            formula = subFormulas[i]
-            let formulaNegation = new Formulas.UnaryOperatorFormula('!', formula)
-            if(!this.contains(formula) && !this.contains(formulaNegation)){
-                return [formula, formulaNegation]
             }
-        }
 
-        return [false, false]
+        }
+        return [false, false, false]
     }
 
-    findModalFormula(){
+    createISuccessor(newFormulas, formula){
+
+        let newLabel = ''
+        for(let i = 0; i < newFormulas.length; i++){
+            if(i == newFormulas.length - 1){
+                newLabel += newFormulas[i].toTextual()
+            }else{
+                newLabel += newFormulas[i].toTextual() + ', '
+            }
+        }
+        newFormulas.push(formula)
+        let successor = new Node(newFormulas.length > 1 ?  newLabel + ', ' + formula.toTextual() : formula.toTextual(), newFormulas, this)
+        this.successors.push(successor)
+        return successor
+    }
+
+    getReducedSet(operator){
+        let reducedSet = []
         let i, formula;
         for(i = 0; i < this.formulas.length; i++){
             formula = this.formulas[i]
-            if(formula.type == 'Unary'){
-                if(formula.operator == '!'){
-                    if(formula.formula.type == 'Unary'){
-                        if(formula.formula.isModal()){
-                            return formula
-                        }
-                    }
-                }else if(formula.isModal()){
-                    return formula
+            if(formula.operator == operator){
+                reducedSet.push(formula.formula)
+            }
+        }
+
+        return reducedSet
+    }
+
+    findNKF(){
+        let nKFormulas = []
+        let i, formula
+        for(i = 0; i < this.formulas.length; i++){
+            formula = this.formulas[i]
+            if(formula.type == 'Unary' && formula.operator == '!'){
+                let innerFormula = formula.formula
+                if(innerFormula.type == 'Unary' && innerFormula.operator[0] == 'K'){
+                    nKFormulas.push(formula)
                 }
             }
         }
 
-        return false
+        return nKFormulas
+    }
+
+    x(){
+        let modalFormulas = []
+        let i, formula, innerFormula;
+        for(i = 0; i < this.formulas.length; i++){
+            formula = this.formulas[i]
+            innerFormula = formula.formula ? formula.formula : false
+            if(formula.isModal()){
+                modalFormulas.push(formula)
+            }else if(innerFormula.isModal()){
+                modalFormulas.push(formula)
+            }
+        }
+
+        return modalFormulas
     }
 
     contains(formula){
