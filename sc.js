@@ -125,7 +125,7 @@ function KmSAT(formula){
 }
 
 function main(){
-    let input = '((!p&r)&!(K1K2!K3!q&t)&(K1!p))&(!K1r)&q'
+    let input = 'a&!a'
     let rootFormula = Parser.parse(input)
     let result = KmSAT(rootFormula)
     console.log('Zadovoljivost formule: ', result)

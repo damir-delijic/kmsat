@@ -217,10 +217,12 @@ class Node {
        let i, j, f1, f2;
        for(i = 0; i < this.formulas.length; i++){
             f1 = this.formulas[i]
-            for(j = 0; j < this.formulas.length && i != j; j++){
-                f2 = this.formulas[j]
-                if(f1.isNegationOf(f2)){
-                    return true
+            for(j = 0; j < this.formulas.length; j++){
+                if(i != j){
+                    f2 = this.formulas[j]
+                    if(f1.isNegationOf(f2)){
+                        return true
+                    }
                 }
             }
        }
